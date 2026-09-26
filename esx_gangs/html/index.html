@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+    <div id="app" class="hidden">
+        <div class="shell">
+            <header class="head">
+                <div class="head-left">
+                    <img class="logo" src="img/icons/users.svg" alt="" />
+                    <div>
+                        <h1>Management of Gangs</h1>
+                        <span>Create gangs, locations and recipes</span>
+                    </div>
+                </div>
+                <button class="close" id="btnClose">×</button>
+            </header>
+            <div class="body">
+                <aside class="side">
+                    <div class="create-box card">
+                        <h3><span class="ico"><img src="img/icons/plus.svg" alt="" /></span> New gang</h3>
+                        <input id="gname" placeholder="Gang name (english)" maxlength="32" />
+                        <input id="glabel" placeholder="Display label" maxlength="50" />
+                        <input id="gdays" type="number" min="0" max="365" value="30" placeholder="Renewal days (0 = unlimited)" title="Renewal period in days — auto-disable when it ends (0 = never)" />
+                        <button id="btnCreate">Create gang</button>
+                    </div>
+                    <div class="list-wrap">
+                        <div class="list-head">Gangs</div>
+                        <div id="gangList" class="gang-list"></div>
+                    </div>
+                </aside>
+                <main class="main">
+                    <div id="empty" class="empty">
+                        <img src="img/icons/users.svg" alt="" />
+                        <b>No gang selected</b>
+                        <span>Create a gang or pick one from the list</span>
+                    </div>
+                    <div id="editor" class="hidden">
+                        <header class="top">
+                            <div>
+                                <h2 id="edTitle">—</h2>
+                                <div class="tag-row">
+                                    <span id="edName" class="tag"></span>
+                                    <span id="edStatus" class="status on">Active</span>
+                                </div>
+                                <div class="meta" id="edExpiry">—</div>
+                            </div>
+                            <div class="top-actions">
+                                <button id="btnRenew" title="Start a fresh renewal period and enable the gang">Renew</button>
+                                <button id="btnEnable" class="ghost" title="Enable the gang (if its period has not ended)">Enable</button>
+                                <button id="btnDisable" class="ghost" title="Disable the gang">Disable</button>
+                                <input id="renewDays" type="number" min="0" max="365" title="Renewal days (0 = unlimited)" />
+                                <button id="btnSetDays" title="Set a new period of N days starting now">Change days</button>
+                                <button id="btnDelete" class="danger">Delete gang</button>
+                            </div>
+                        </header>
+                        <section class="grid">
+                            <article class="card">
+                                <h3><span class="ico"><img src="img/icons/car.svg" alt="" /></span> Parking</h3>
+                                <p>Parking entrance and vehicle spawn</p>
+                                <div class="row">
+                                    <button data-kind="parking">Set parking</button>
+                                    <button data-kind="spawn" class="ghost">Set spawn</button>
+                                </div>
+                                <div class="meta" id="metaParking">Not set</div>
+                            </article>
+                            <article class="card">
+                                <h3><span class="ico"><img src="img/icons/box.svg" alt="" /></span> Stash</h3>
+                                <p>Gang stash location</p>
+                                <button data-kind="stash">Set stash</button>
+                                <div class="meta" id="metaStash">Not set</div>
+                            </article>
+                            <article class="card">
+                                <h3><span class="ico"><img src="img/icons/shirt.svg" alt="" /></span> Wardrobe</h3>
+                                <p>Gang clothing locker</p>
+                                <button data-kind="wardrobe">Set wardrobe</button>
+                                <div class="meta" id="metaWardrobe">Not set</div>
+                            </article>
+                            <article class="card">
+                                <h3><span class="ico"><img src="img/icons/crown.svg" alt="" /></span> Boss Menu</h3>
+                                <p>Boss menu location</p>
+                                <button data-kind="boss">Set boss menu</button>
+                                <div class="meta" id="metaBoss">Not set</div>
+                            </article>
+                            <article class="card">
+                                <h3><span class="ico"><img src="img/icons/hammer.svg" alt="" /></span> Craft table</h3>
+                                <p>Gang crafting bench</p>
+                                <button data-kind="craft">Set craft table</button>
+                                <div class="meta" id="metaCraft">Not set</div>
+                            </article>
+                        </section>
+                        <section class="card wide">
+                            <div class="row between">
+                                <h3><span class="ico"><img src="img/icons/hammer.svg" alt="" /></span> Craft recipes <small>(max 10)</small></h3>
+                                <button id="btnAddRecipe" class="ghost">+ Recipe</button>
+                            </div>
+                            <p class="hint">Result item spawn name, craft time (seconds), and required items</p>
+                            <div id="recipeList"></div>
+                            <button id="btnSaveRecipes" class="save">Save recipes</button>
+                        </section>
+                        <section class="card wide">
+                            <h3><span class="ico"><img src="img/icons/car.svg" alt="" /></span> Parking vehicles</h3>
+                            <p>Sit in the vehicle and use: <b>/addcargang gangname</b> — one of each model</p>
+                            <ul id="vehList" class="veh-list"></ul>
+                        </section>
+                        <section class="card wide">
+                            <div class="row between">
+                                <h3><span class="ico"><img src="img/icons/ranks.svg" alt="" /></span> Ranks <small>(max 10)</small></h3>
+                                <button id="btnAddRank" class="ghost">+ Rank</button>
+                            </div>
+                            <div id="rankList" class="ranks"></div>
+                            <button id="btnSaveRanks" class="save">Save ranks</button>
+                        </section>
+                        <p class="hint">Set member: <b>/setgang [id] [namegang] [rank]</b></p>
+                    </div>
+                </main>
+            </div>
+        </div>
+    </div>
+    <div id="boss" class="hidden">
+        <div class="shell">
+            <header class="head">
+                <div class="head-left">
+                    <img class="logo" src="img/icons/crown.svg" alt="" />
+                    <div>
+                        <h1>Management of <span id="bossTitle">Gang</span></h1>
+                        <span>Boss menu</span>
+                    </div>
+                </div>
+                <button class="close" id="bossClose">×</button>
+            </header>
+            <div class="body">
+                <aside class="side nav">
+                    <button class="tab on" data-tab="members">
+                        <span class="ico"><img src="img/icons/users.svg" alt="" /></span>
+                        <span class="t"><b>Members</b><small>Manage ranks and fire</small></span>
+                    </button>
+                    <button class="tab" data-tab="money">
+                        <span class="ico"><img src="img/icons/wallet.svg" alt="" /></span>
+                        <span class="t"><b>Treasury</b><small>Balance of gang money</small></span>
+                    </button>
+                    <button class="tab" data-tab="cars">
+                        <span class="ico"><img src="img/icons/car.svg" alt="" /></span>
+                        <span class="t"><b>Vehicles</b><small>Recall parked cars</small></span>
+                    </button>
+                    <button class="tab" data-tab="clothes">
+                        <span class="ico"><img src="img/icons/shirt.svg" alt="" /></span>
+                        <span class="t"><b>Outfits</b><small>Save rank clothes</small></span>
+                    </button>
+                    <button class="tab" data-tab="access">
+                        <span class="ico"><img src="img/icons/lock.svg" alt="" /></span>
+                        <span class="t"><b>Access</b><small>Who can use features</small></span>
+                    </button>
+                    <button class="tab" data-tab="logs">
+                        <span class="ico"><img src="img/icons/box.svg" alt="" /></span>
+                        <span class="t"><b>Stash logs</b><small>Put / take history</small></span>
+                    </button>
+                    <button class="tab" data-tab="sides">
+                        <span class="ico"><img src="img/icons/users.svg" alt="" /></span>
+                        <span class="t"><b>Sides</b><small>Allies & enemies</small></span>
+                    </button>
+                    <button class="tab" data-tab="negotiation">
+                        <span class="ico"><img src="img/icons/map.svg" alt="" /></span>
+                        <span class="t"><b>Negotiation</b><small>Chat with gangs</small></span>
+                    </button>
+                </aside>
+                <main class="main">
+                    <section id="tab-members" class="tabpage">
+                        <img class="wm" src="img/icons/users.svg" alt="" />
+                        <div class="stats">
+                            <div class="stat">
+                                <small>Members</small>
+                                <strong id="memCount">0</strong>
+                            </div>
+                            <div class="stat wide-stat">
+                                <span class="ico"><img src="img/icons/users.svg" alt="" /></span>
+                                <div>
+                                    <small>List of members</small>
+                                    <p>Promote, demote or fire from the gang</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="panel">
+                            <div class="table-head"><span>Member</span><span>Rank</span><span>Option</span></div>
+                            <div id="memberList" class="mlist"></div>
+                        </div>
+                    </section>
+                    <section id="tab-money" class="tabpage hidden">
+                        <img class="wm" src="img/icons/wallet.svg" alt="" />
+                        <div class="stats">
+                            <div class="stat">
+                                <small>Treasury</small>
+                                <strong class="money" id="bossMoney">$0</strong>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <h3>Move money</h3>
+                            <div class="row">
+                                <input id="moneyAmt" type="number" min="1" placeholder="Amount" />
+                                <button id="btnDep">Deposit</button>
+                                <button id="btnWdr" class="ghost">Withdraw</button>
+                            </div>
+                        </div>
+                    </section>
+                    <section id="tab-cars" class="tabpage hidden">
+                        <img class="wm" src="img/icons/car.svg" alt="" />
+                        <h2>Gang vehicles</h2>
+                        <div id="bossCars" class="mlist"></div>
+                    </section>
+                    <section id="tab-clothes" class="tabpage hidden">
+                        <img class="wm" src="img/icons/shirt.svg" alt="" />
+                        <h2>Gang outfits</h2>
+                        <div id="clothRanks" class="mlist"></div>
+                        <div class="mrow" style="margin-top:12px">
+                            <div class="info">
+                                <b>Rob outfit</b>
+                                <small>For every gang member</small>
+                                <span id="robState" class="offline">Not set</span>
+                            </div>
+                            <div class="actions">
+                                <button id="btnRobSave" class="up">Save rob outfit</button>
+                            </div>
+                        </div>
+                    </section>
+                    <section id="tab-access" class="tabpage hidden">
+                        <img class="wm" src="img/icons/lock.svg" alt="" />
+                        <h2>Rank access</h2>
+                        <div id="accessList" class="mlist"></div>
+                    </section>
+                    <section id="tab-logs" class="tabpage hidden">
+                        <img class="wm" src="img/icons/box.svg" alt="" />
+                        <div class="log-head">
+                            <h2>Stash logs</h2>
+                            <button id="btnClearLogs" class="danger">Clear history</button>
+                        </div>
+                        <div id="logList" class="mlist logs"></div>
+                    </section>
+                    <section id="tab-sides" class="tabpage hidden">
+                        <img class="wm" src="img/icons/users.svg" alt="" />
+                        <div class="log-head">
+                            <h2>Sides - Relations</h2>
+                        </div>
+                        <div class="panel">
+                            <div class="table-head sides-head"><span>Gang</span><span>Your Side</span><span>Their Side</span><span>Set</span></div>
+                            <div id="sidesList" class="mlist"></div>
+                        </div>
+                    </section>
+                    <section id="tab-negotiation" class="tabpage hidden">
+                        <div class="negotiation-layout telegram">
+                            <div class="negotiation-gangs tg-left">
+                                <div class="tg-left-header">
+                                    <div class="tg-search">
+                                        <input id="tgSearch" placeholder="Search gangs..." />
+                                    </div>
+                                </div>
+                                <div class="tg-section">
+                                    <div class="tg-section-title">Groups</div>
+                                    <div id="groupList" class="tg-chatlist"></div>
+                                </div>
+                                <div class="tg-section">
+                                    <div class="tg-section-title">Direct</div>
+                                    <div id="negotiationGangList" class="tg-chatlist"></div>
+                                </div>
+                                <button id="btnNewGroupFab" class="tg-fab" title="New Group">+</button>
+                                <button id="btnNewGroup" class="hidden">+</button>
+                                <!-- Create Group Modal - Integrated inside left panel, centered -->
+                                <div id="groupModal" class="tg-profile-modal hidden">
+                                    <div class="tg-profile-content">
+                                        <div class="tg-profile-header">
+                                            <b>Create Group</b>
+                                            <button id="btnCancelGroup" class="tg-sheet-close">×</button>
+                                        </div>
+                                        <div class="tg-profile-body" style="padding:0 18px 18px; display:flex; flex-direction:column; gap:10px;">
+                                            <input id="groupName" placeholder="Group name (english, e.g. alliance1)" maxlength="32" />
+                                            <input id="groupLabel" placeholder="Group label (e.g. North Alliance)" maxlength="50" />
+                                            <div class="tg-section-title" style="padding:0;">Select gangs</div>
+                                            <div id="groupGangSelect" class="gang-select-list" style="margin:0; max-height:180px;"></div>
+                                            <button id="btnCreateGroup" class="tg-sheet-create" style="margin:0;">Create Group</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="negotiation-chat tg">
+                                <div id="chatHeader" class="chat-header tg-header">
+                                    <div class="tg-header-left">
+                                        <span class="tg-avatar" id="chatAvatar">💬</span>
+                                        <div>
+                                            <b id="chatHeaderTitle">Select a chat</b>
+                                            <small id="chatHeaderSub">Telegram style negotiation</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div id="chatList" class="chat-list tg-list"></div>
+                                <div class="emoji-panel hidden" id="emojiPanel">
+                                    <span>😀</span><span>😃</span><span>😄</span><span>😁</span><span>😆</span><span>😅</span><span>😂</span><span>🤣</span><span>😊</span><span>😇</span>
+                                    <span>🙂</span><span>🙃</span><span>😉</span><span>😌</span><span>😍</span><span>🥰</span><span>😘</span><span>😗</span><span>😙</span><span>😚</span>
+                                    <span>😋</span><span>😛</span><span>😝</span><span>😜</span><span>🤪</span><span>🤨</span><span>🧐</span><span>🤓</span><span>😎</span><span>🤩</span>
+                                    <span>🥳</span><span>😏</span><span>😒</span><span>😞</span><span>😔</span><span>😟</span><span>😕</span><span>🙁</span><span>☹️</span><span>😣</span>
+                                    <span>😖</span><span>😫</span><span>😩</span><span>🥺</span><span>😢</span><span>😭</span><span>😤</span><span>😠</span><span>😡</span><span>🤬</span>
+                                    <span>🤯</span><span>😳</span><span>🥵</span><span>🥶</span><span>😱</span><span>😨</span><span>😰</span><span>😥</span><span>😓</span><span>🤗</span>
+                                    <span>🤔</span><span>🤭</span><span>🤫</span><span>🤥</span><span>😶</span><span>😐</span><span>😑</span><span>😬</span><span>🙄</span><span>😯</span>
+                                    <span>😦</span><span>😧</span><span>😮</span><span>😲</span><span>🥱</span><span>😴</span><span>🤤</span><span>😪</span><span>😵</span><span>🤐</span>
+                                    <span>🥴</span><span>🤢</span><span>🤮</span><span>🤧</span><span>😷</span><span>🤒</span><span>🤕</span><span>🤑</span><span>🤠</span><span>😈</span>
+                                    <span>👿</span><span>👹</span><span>👺</span><span>🤡</span><span>💩</span><span>👻</span><span>💀</span><span>☠️</span><span>👽</span><span>👾</span>
+                                    <span>🤖</span><span>🎃</span><span>😺</span><span>😸</span><span>😹</span><span>😻</span><span>😼</span><span>😽</span><span>🙀</span><span>😿</span>
+                                    <span>😾</span><span>👋</span><span>🤚</span><span>🖐️</span><span>✋</span><span>🖖</span><span>👌</span><span>🤏</span><span>✌️</span><span>🤞</span>
+                                    <span>🤟</span><span>🤘</span><span>🤙</span><span>👈</span><span>👉</span><span>👆</span><span>🖕</span><span>👇</span><span>☝️</span><span>👍</span>
+                                    <span>👎</span><span>👊</span><span>✊</span><span>🤛</span><span>🤜</span><span>👏</span><span>🙌</span><span>👐</span><span>🤲</span><span>🤝</span>
+                                    <span>🙏</span><span>✍️</span><span>💅</span><span>🤳</span><span>💪</span><span>🦾</span><span>🦿</span><span>🦵</span><span>🦶</span><span>👂</span>
+                                    <span>🦻</span><span>👃</span><span>🧠</span><span>🦷</span><span>🦴</span><span>👀</span><span>👁️</span><span>👅</span><span>👄</span><span>💋</span>
+                                    <span>🩸</span><span>❤️</span><span>🧡</span><span>💛</span><span>💚</span><span>💙</span><span>💜</span><span>🖤</span><span>🤍</span><span>🤎</span>
+                                    <span>💔</span><span>❣️</span><span>💕</span><span>💞</span><span>💓</span><span>💗</span><span>💖</span><span>💝</span><span>💘</span><span>💟</span>
+                                    <span>💌</span><span>💤</span><span>💢</span><span>💣</span><span>💥</span><span>💦</span><span>💨</span><span>💫</span><span>💬</span><span>🗨️</span>
+                                    <span>🗯️</span><span>💭</span><span>💯</span><span>✅</span><span>❌</span><span>⚠️</span><span>🚫</span><span>⛔</span><span>🔥</span><span>💧</span>
+                                    <span>⭐</span><span>🌟</span><span>✨</span><span>⚡</span><span>❄️</span><span>☀️</span><span>🌈</span><span>🌙</span><span>🌞</span><span>🌚</span>
+                                    <span>🌹</span><span>🌺</span><span>🌻</span><span>🌼</span><span>🌷</span><span>🍀</span><span>🍁</span><span>🍂</span><span>🍃</span><span>🌵</span>
+                                    <span>🌴</span><span>🌳</span><span>🌲</span><span>🍎</span><span>🍊</span><span>🍋</span><span>🍌</span><span>🍉</span><span>🍇</span><span>🍓</span>
+                                    <span>🍒</span><span>🍑</span><span>🥭</span><span>🍍</span><span>🥥</span><span>🥝</span><span>🍅</span><span>🥑</span><span>🥦</span><span>🥬</span>
+                                    <span>🥒</span><span>🌶️</span><span>🌽</span><span>🥕</span><span>🧄</span><span>🧅</span><span>🥔</span><span>🍠</span><span>🥐</span><span>🥖</span>
+                                    <span>🍞</span><span>🥨</span><span>🧀</span><span>🥚</span><span>🍳</span><span>🧈</span><span>🥞</span><span>🧇</span><span>🥓</span><span>🥩</span>
+                                    <span>🍗</span><span>🍖</span><span>🌭</span><span>🍔</span><span>🍟</span><span>🍕</span><span>🥪</span><span>🌮</span><span>🌯</span><span>🥙</span>
+                                    <span>🧆</span><span>🍿</span><span>🧂</span><span>🥫</span><span>🍱</span><span>🍘</span><span>🍙</span><span>🍚</span><span>🍛</span><span>🍜</span>
+                                    <span>🍝</span><span>🍢</span><span>🍣</span><span>🍤</span><span>🍥</span><span>🥮</span><span>🍡</span><span>🥟</span><span>🥠</span><span>🥡</span>
+                                    <span>🍦</span><span>🍧</span><span>🍨</span><span>🍩</span><span>🍪</span><span>🎂</span><span>🍰</span><span>🧁</span><span>🥧</span><span>🍫</span>
+                                    <span>🍬</span><span>🍭</span><span>🍮</span><span>🍯</span><span>🍼</span><span>🥛</span><span>☕</span><span>🍵</span><span>🍶</span><span>🍾</span>
+                                    <span>🍷</span><span>🍸</span><span>🍹</span><span>🍺</span><span>🍻</span><span>🥂</span><span>🥃</span><span>🥤</span><span>🧃</span><span>🧉</span>
+                                    <span>⚽</span><span>🏀</span><span>🏈</span><span>⚾</span><span>🎾</span><span>🏐</span><span>🎳</span><span>🏏</span><span>🏑</span><span>🏒</span>
+                                    <span>🥍</span><span>🏓</span><span>🏸</span><span>🥊</span><span>🥋</span><span>🥅</span><span>⛳</span><span>🎯</span><span>🎱</span><span>🎮</span>
+                                    <span>🎲</span><span>🧩</span><span>🎭</span><span>🎨</span><span>👓</span><span>👔</span><span>👕</span><span>👖</span><span>👗</span><span>👠</span>
+                                    <span>👑</span><span>🎩</span><span>💍</span><span>💎</span><span>🔔</span><span>🎵</span><span>🎶</span><span>🎤</span><span>🎧</span><span>📱</span>
+                                    <span>💻</span><span>📷</span><span>🔍</span><span>💡</span><span>📚</span><span>💰</span><span>💳</span><span>✉️</span><span>📦</span><span>✏️</span>
+                                    <span>📝</span><span>📌</span><span>📍</span><span>🔒</span><span>🔑</span><span>🔨</span><span>⚔️</span><span>🔫</span><span>🛡️</span><span>🔧</span>
+                                    <span>⚙️</span><span>🧲</span><span>💉</span><span>💊</span><span>🚪</span><span>🛏️</span><span>🚽</span><span>🛒</span><span>⚠️</span><span>🚫</span>
+                                    <span>⬆️</span><span>➡️</span><span>⬇️</span><span>⬅️</span><span>✅</span><span>✔️</span><span>❌</span><span>💯</span><span>🔟</span><span>🏁</span>
+                                    <span>🚩</span><span>🏴</span><span>🏳️</span><span>🇩🇪</span><span>🇮🇷</span><span>🇺🇸</span><span>🇬🇧</span><span>🇫🇷</span><span>🇹🇷</span><span>🇷🇺</span>
+                                </div>
+                                <div class="chat-input-row tg-input">
+                                    <button id="btnEmoji" class="icon-btn" title="Emoji">😊</button>
+                                    <input id="chatInput" placeholder="Write a message..." maxlength="500" />
+                                    <button id="btnSendChat" class="send-btn">➤</button>
+                                </div>
+                                <!-- Group Profile Modal - Integrated inside chat - middle of chat page -->
+                                <div id="groupProfileModal" class="tg-profile-modal hidden">
+                                    <div class="tg-profile-content">
+                                        <div class="tg-profile-header">
+                                            <span class="tg-profile-avatar" id="groupProfileAvatar">👥</span>
+                                            <div class="tg-profile-info">
+                                                <b id="groupProfileName">Group Name</b>
+                                                <small id="groupProfileSub">members</small>
+                                            </div>
+                                            <button id="btnCloseGroupProfile" class="tg-sheet-close">×</button>
+                                        </div>
+                                        <div class="tg-profile-body">
+                                            <div class="tg-profile-section">
+                                                <div class="tg-section-title">Members</div>
+                                                <div id="groupProfileMembers" class="tg-profile-members"></div>
+                                            </div>
+                                            <div class="tg-profile-actions">
+                                                <button id="btnLeaveGroup" class="tg-action-btn leave hidden">Leave Group</button>
+                                                <button id="btnDeleteGroup" class="tg-action-btn danger hidden">Delete Group</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Direct Gang Profile Modal - Integrated inside chat -->
+                                <div id="directProfileModal" class="tg-profile-modal hidden">
+                                    <div class="tg-profile-content">
+                                        <div class="tg-profile-header">
+                                            <span class="tg-profile-avatar" id="directProfileAvatar">G</span>
+                                            <div class="tg-profile-info">
+                                                <b id="directProfileName">Gang Name</b>
+                                                <small id="directProfileSub">gang_name</small>
+                                            </div>
+                                            <button id="btnCloseDirectProfile" class="tg-sheet-close">×</button>
+                                        </div>
+                                        <div class="tg-profile-body">
+                                            <div class="tg-profile-section">
+                                                <div id="directProfileStatus" class="tg-profile-status"></div>
+                                            </div>
+                                            <div class="tg-profile-actions">
+                                                <button id="btnBlockGang" class="tg-action-btn danger">Block Gang</button>
+                                                <button id="btnUnblockGang" class="tg-action-btn hidden">Unblock Gang</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                </main>
+            </div>
+        </div>
+    </div>
+    <script src="app.js"></script>
+</body>
+</html>
